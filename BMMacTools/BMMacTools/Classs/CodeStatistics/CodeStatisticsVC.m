@@ -9,17 +9,12 @@
 #import "CodeStatisticsVC.h"
 NSMutableArray *arr;
 
-NSUInteger caculateLineNumberofFile(NSString *path)
-
+NSUInteger caculateLineNumberofFile(NSString *path, NSArray <NSString *> *names)
 {
-    
-    
     // 代码行数
     
     NSUInteger count = 0;
-    
-    
-    
+
     //得到文件管理这个类
     
     NSFileManager *mgr = [NSFileManager defaultManager];
@@ -56,17 +51,14 @@ NSUInteger caculateLineNumberofFile(NSString *path)
             
             //计算出新路径中文件的代码行数，并与前面的相加
             
-            count +=caculateLineNumberofFile(newPath);
+            count +=caculateLineNumberofFile(newPath, names);
             
         }
         
-        
         return count;
-        
     }
     else
     {
-        
         // 拿到文件的扩展名
         
         NSString *extension = [path pathExtension];
@@ -85,39 +77,51 @@ NSUInteger caculateLineNumberofFile(NSString *path)
         
         NSArray *code = [content componentsSeparatedByString:@"\n"];
         
-        //打印出每个文件包含的代码数
         
-        NSRange range = [path rangeOfString:@"/Users/a1/Desktop/"];
-        
-        NSString *shortPath = [path stringByReplacingCharactersInRange:range withString:@""];
-                
-        
-        
-        [arr addObject:@{@"file" : [[shortPath componentsSeparatedByString:@"/"] lastObject], @"LINE" : [NSString stringWithFormat:@"%ld", code.count]}];
-        
-        //最终数组的个数就是要求代码行数，返回
-        return code.count;
+        if (names.count != 0) {
+            for (NSString *str in names) {
+                if ( [content rangeOfString:str].location != NSNotFound) {
+                    //打印出每个文件包含的代码数
+                    [arr addObject:@{@"file" : [[path componentsSeparatedByString:@"/"] lastObject], @"LINE" : [NSString stringWithFormat:@"%ld", code.count]}];
+                    
+                    //最终数组的个数就是要求代码行数，返回
+                    return code.count;
+                }
+            }
+            return 0;
+        }else {
+            //打印出每个文件包含的代码数
+            
+            [arr addObject:@{@"file" : [[path componentsSeparatedByString:@"/"] lastObject], @"LINE" : [NSString stringWithFormat:@"%ld", code.count]}];
+            
+            //最终数组的个数就是要求代码行数，返回
+            return code.count;
+        }
     }
 }
+
 
 @interface CodeStatisticsVC ()
 @property (weak) IBOutlet NSTextField *filePathTextField;
 @property (unsafe_unretained) IBOutlet NSTextView *textView;
-    @property (unsafe_unretained) IBOutlet NSTextView *textView2;
-    @property (weak) IBOutlet NSTextField *PRlABEL;
+@property (unsafe_unretained) IBOutlet NSTextView *textView2;
+@property (weak) IBOutlet NSTextField *PRlABEL;
+@property (weak) IBOutlet NSTextField *userNameTextFiled;
 
 @end
 
 @implementation CodeStatisticsVC
     
 - (IBAction)buttonClick:(id)sender {
-    
+
     arr = [@[] mutableCopy];
+    
     self.PRlABEL.stringValue = @"正在统计...";
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+
         
-        NSUInteger line = caculateLineNumberofFile(self.filePathTextField.stringValue);
+        NSUInteger line = caculateLineNumberofFile(self.filePathTextField.stringValue, self.userNameTextFiled.stringValue.length > 1 ? [self.userNameTextFiled.stringValue componentsSeparatedByString:@","] : @[]);
         
         
         [arr sortUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
@@ -160,5 +164,4 @@ NSUInteger caculateLineNumberofFile(NSString *path)
         self.PRlABEL.stringValue = @"";
     });
 }
-    
 @end
